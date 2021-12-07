@@ -43,7 +43,7 @@ namespace BookStoreApi.Controllers
         public IActionResult CreateAutor(AutorModel model)
         {
             if (string.IsNullOrEmpty(model.ImeAutora) || string.IsNullOrEmpty(model.PrezimeAutora))
-                return BadRequest("X");
+                return BadRequest("NoData");
 
             Autor autor = new Autor();
             autor.ImeAutora = model.ImeAutora;
@@ -122,7 +122,7 @@ namespace BookStoreApi.Controllers
         public IActionResult CreateZanr(ZanrModel model)
         {
             if (string.IsNullOrEmpty(model.ZanrNaziv))
-                return BadRequest("X");
+                return BadRequest("NoData");
 
             Zanr zanr = new Zanr();
             zanr.ZanrNaziv = model.ZanrNaziv;
@@ -147,7 +147,7 @@ namespace BookStoreApi.Controllers
             var zanr = _db.Zanrs.Find(model.IdZanra);
 
             if (zanr is null)
-                return BadRequest("NoAutor");
+                return BadRequest("NoZanr");
 
             zanr.ZanrNaziv = model.ZanrNaziv;
             
@@ -201,7 +201,7 @@ namespace BookStoreApi.Controllers
         public IActionResult CreateKnjiga(KnjigaModel model)
         {
             if (string.IsNullOrEmpty(model.KnjigaId.ToString()))
-                return BadRequest("X");
+                return BadRequest("BadData");
 
             Knjiga knjiga = new Knjiga();
             knjiga.NazivKnjige = model.NazivKnjige;
@@ -231,9 +231,12 @@ namespace BookStoreApi.Controllers
             var knjiga= _db.Knjigas.Find(model.KnjigaId);
 
             if (knjiga is null)
-                return BadRequest("NoAutor");
+                return BadRequest("NoKnjiga");
 
             knjiga.NazivKnjige = model.NazivKnjige;
+            knjiga.CenaKnjige = model.CenaKnjige;
+            knjiga.ZanrId = model.ZanrId;
+            knjiga.AutorId = model.AutorId;
 
 
             _db.Knjigas.Attach(knjiga);
@@ -262,10 +265,48 @@ namespace BookStoreApi.Controllers
         [HttpGet]
         public IActionResult GetBooksByAutorId(int id)
         {
-            var knjiga = _db.Knjigas.Select(x=> x.KnjigaId);
-            
+           var knjige = _db.Knjigas.Where(x => x.AutorId == id).ToList();
 
-            return Ok(knjiga);
+            if (knjige is null)
+                return BadRequest("BadId");
+
+            return Ok(knjige);
+        }
+
+        [Route("GetAutoriByKnjige/{id}")]
+        [HttpGet]
+        public IActionResult GetAutorsByBook(int id)
+        {
+            var autori = _db.Autors.Where(x => x.Knjigas.Any(y => y.KnjigaId == id)).ToList();
+
+            if (autori is null)
+                return BadRequest("BadId");
+
+            return Ok(autori);
+        }
+
+        [Route("GetKnjigeByZanr/{id}")]
+        [HttpGet]
+        public IActionResult GetBooksByGenre(int id)
+        {
+            var knjige = _db.Knjigas.Where(x => x.ZanrId == id).ToList();
+
+            if (knjige is null)
+                return BadRequest("BadId");
+
+            return Ok(knjige);
+        }
+
+        [Route("GetAutoriByZanr/{id}")]
+        [HttpGet]
+        public IActionResult GetAutorsByGenre(int id)
+        {
+            var autori = _db.Autors.Where(x => x.Knjigas.Any(y => y.ZanrId == id)).ToList();
+
+            if (autori is null)
+                return BadRequest("BadId");
+
+            return Ok(autori);
         }
     }
 }
